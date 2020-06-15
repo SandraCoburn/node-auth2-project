@@ -1,21 +1,22 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-const Users = require("../users/users-model.js");
+const Users = require("../users/users-model");
+const { jwtSecret } = require("../config/secrets");
 
 // for endpoints beginning with /api/auth
 router.post("/register", (req, res) => {
   let user = req.body;
-  const hash = bcrypt.hashSync(user.password, 10); // 2 ^ n
+  const hash = bcrypt.hashSync(user.password, 10);
   user.password = hash;
 
   Users.add(user)
     .then((saved) => {
-      req.session.loggedIn = true; // for the session to show if logged in
       res.status(201).json(saved);
     })
-    .catch((error) => {
-      res.status(500).json(error);
+    .catch((err) => {
+      res.status(500).json({ message: "error with the server" });
     });
 });
 
@@ -26,34 +27,27 @@ router.post("/login", (req, res) => {
     .first()
     .then((user) => {
       if (user && bcrypt.compareSync(password, user.password)) {
-        req.session.loggedIn = true;
-        // req.session.userId = user.id;
-        req.session.username = user.username;
-
-        res.status(200).json({
-          message: `Welcome ${user.username}!`,
-        });
+        const token = generateToken(user); // get a token
+        res.status(200).json({ message: `Welcome ${user.username}!`, token });
       } else {
-        res.status(401).json({ message: "Invalid Credentials" });
+        res.status(401).json({ message: "invalid credentials" });
       }
     })
-    .catch((error) => {
-      res.status(500).json(error);
+    .catch((err) => {
+      res.status(500).json({ message: "error at login" });
     });
 });
 
-router.get("/logout", (req, res) => {
-  if (req.session) {
-    req.session.destroy((err) => {
-      if (err) {
-        res.status(500).json({ you: "can check out anuy time you like" });
-      } else {
-        res.end(); // or res.stattus(200).json({you: "logged out successfully"})
-      }
-    });
-  } else {
-    res.status(200).json({ bye: "user" });
-  }
-});
+function generateToken(user) {
+  const payload = {
+    subject: user.id,
+    username: user.username,
+    role: user.role || "user",
+  };
+  const options = {
+    expiresIn: "1hr",
+  };
+  return jwt.sign(payload, jwtSecret, options);
+}
 
 module.exports = router;

@@ -4,7 +4,7 @@ exports.up = function (knex) {
 
     users.string("username", 128).notNullable().unique().index();
     users.string("password", 128).notNullable();
-    users.string("projects", 256);
+    users.string("departments", 256).notNullable();
   });
 };
 
