@@ -5,10 +5,10 @@ const cors = require("cors");
 const session = require("express-session"); //npm i express-session
 const KnexStore = require("connect-session-knex")(session); //remember to curry and pass the session
 
-const authRouter = require("../auth/auth-router.js");
-const usersRouter = require("../users/users-router.js");
-const restricted = require("../auth/restricted-middleware");
-const knex = require("../database/dbConfig"); // needed for storing session in the database
+const authRouter = require("./auth/auth-router");
+const usersRouter = require("./users/users-router");
+const restricted = require("./auth/restricted-middleware");
+const knex = require("./data/dbConfig"); // needed for storing session in the database
 
 const server = express();
 
